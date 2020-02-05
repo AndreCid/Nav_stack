@@ -21,36 +21,37 @@ from sensor_msgs.msg import JointState
 class odometry:
     def __init__(self):
 
-        # Kinematic model
-        self.skid_steer = 0
+	# Kinematic model
+	self.skid_steer = 0
 
-        # robot parameters, from cota thesis
-        self.wheel_diameter = 0.30
-        self.wheel_radius = self.wheel_diameter / 2
-        self.robot_width = 0.43*2
-        self.robot_width_internal = 0.35
-        self.robot_width_external = 0.48
+	# robot parameters, from cota thesis
+	self.wheel_diameter = 0.30
+	self.wheel_radius = self.wheel_diameter / 2
+	self.robot_width = 0.43*2
+	self.robot_width_internal = 0.35
+	self.robot_width_external = 0.48
 
-        # Skidsteer parameters, from cota thesis
-        self.alpha_skid = 0.9838227539528335
-        self.ycir_skid = 0.3045030420948333 
+	# Skidsteer parameters, from cota thesis
+	self.alpha_skid = 0.9838227539528335
+	self.ycir_skid = 0.3045030420948333 
 
-        # Robot Pose
-        self.x = 0.0
-        self.y = 0.0
-        self.th = 0.0
+	# Robot Pose
+	self.x = 0.0
+	self.y = 0.0
+	self.th = 0.0
+	self.Dth = 0.0
 
-        # Motor velocities
-        self.motor_velocity1 = 0
-        self.motor_velocity2 = 0
-        self.motor_velocity3 = 0
-        self.motor_velocity4 = 0
-        self.motor_velocity5 = 0
-        self.motor_velocity6 = 0
+	# Motor velocities
+	self.motor_velocity1 = 0
+	self.motor_velocity2 = 0
+	self.motor_velocity3 = 0
+	self.motor_velocity4 = 0
+	self.motor_velocity5 = 0
+	self.motor_velocity6 = 0
 
-        self.reduction = 111
-
+	self.reduction = 111
         self.ros_init()
+
 
     def ros_init(self):
 
@@ -75,6 +76,7 @@ class odometry:
         # Tf broadcaster
         self.odom_broadcaster = tf.TransformBroadcaster()
 
+	
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
 
@@ -106,14 +108,14 @@ class odometry:
         self.current_time = rospy.Time.now()
 
         # velocities of each side of the robot, the average of the wheels velocities in RPM
-        velocity_right_rpm = (self.motor_velocity1 + self.motor_velocity2 + self.motor_velocity3)/(self.reduction * 3)
-        velocity_left_rpm = (self.motor_velocity4 + self.motor_velocity5 + self.motor_velocity6)/(self.reduction * 3)
+        velocity_left_rpm = ((self.motor_velocity1 + self.motor_velocity2 + self.motor_velocity3))/(self.reduction * 3)
+        velocity_right_rpm = ((self.motor_velocity4 + self.motor_velocity5 + self.motor_velocity6))/(self.reduction * 3)
 
         # RPM to rad/s, and multiplying by the wheel_radius
         # Changed RPM to rad/s constant value from  0.10471675688 to 0.10471975511965977 -> (2*pi)/60
-        velocity_right = (0.10471975511965977) * velocity_right_rpm * self.wheel_radius
-        velocity_left = (0.10471975511965977) * velocity_left_rpm * self.wheel_radius
-        
+        velocity_right = - (0.10471975511965977) * velocity_right_rpm #* self.wheel_radius   
+        velocity_left = ((0.10471975511965977) * velocity_left_rpm) #* self.wheel_radius)
+	
         if self.skid_steer:
             ### Skid-Steering model
 
@@ -121,7 +123,7 @@ class odometry:
             v_robot = (velocity_right + velocity_left)*(self.alpha_skid/2)
 
             # Angular velocity
-            w_robot = (velocity_right - velocity_left)*(self.alpha_skid/(2*self.ycir_skid))
+            w_robot = ((velocity_right - velocity_left)*(self.alpha_skid/(2*self.ycir_skid)))
 
             # Velocity in the XY plane
             x_robot = v_robot * cos(self.th)
@@ -140,68 +142,48 @@ class odometry:
 
         else:
 
-            """
-            # Linear velocity
-            v_robot = (velocity_right + velocity_left) / 2
-            # Angular velocity
-            w_robot = (velocity_right - velocity_left) / self.robot_width
-            ### Differential model
-            # Velocity in the XY plane
-            x_robot = v_robot * cos(self.th)
-            y_robot = v_robot * sin(self.th)
-            # Calculating odometry
-            dt = (self.current_time - self.last_time).to_sec()
-            delta_x = (x_robot * cos(self.th) - y_robot * sin(self.th)) * dt
-            delta_y = (x_robot * sin(self.th) + y_robot * cos(self.th)) * dt
-            delta_th = w_robot * dt
-            # Integrating pose
-            self.x += delta_x
-            self.y += delta_y
-            self.th += delta_th
-            """
-
-
-            # Odometry by geometry
-
-            """
-            dt = (self.current_time - self.last_time).to_sec()
-            d_center = (velocity_right + velocity_left)*dt / 2
-            delta_th = (velocity_right - velocity_left)*dt / self.robot_width
-            r_center = d_center/delta_th
-            self.x += r_center * (-sin(self.th) + sin(delta_th)*cos(self.th) + sin(self.th)*cos(delta_th))
-            self.y += r_center * (cos(self.th) - cos(delta_th)*cos(self.th) + sin(self.th)*sin(delta_th))
-            self.th += delta_th
-            """
-
-
             # Odometry by dead reckoning
 
             
             dt = (self.current_time - self.last_time).to_sec()
             L = self.robot_width_external/2
-            v_robot = (self.wheel_radius / 2) * (velocity_right + velocity_left)
-            w_robot = (self.wheel_radius / 2) * (velocity_right / L - velocity_left / L )
-            
+          
+            v_robot = (self.wheel_radius / 2) * (velocity_right + velocity_left) 
+	    w_robot = (self.wheel_radius / 2) *(velocity_right / L - velocity_left / L ) *dt 
+	    
+
+	               
+
 	    # Velocity in the XY plane
             x_robot = v_robot * cos(self.th)
-            y_robot = v_robot * sin(self.th)
-	
+            y_robot = - v_robot * sin(self.th)
+	    
 
-            if (velocity_right == velocity_left):
+	    #Ds = ((velocity_right + velocity_left / 2) * dt) * (self.wheel_radius / 2)
+	    #Dth = ((velocity_right - velocity_left / 2 * L) * dt) * (self.wheel_radius / 2)
+
+	    if (velocity_right == velocity_left) :
+		
                 self.th = self.th
-                self.x += v_robot * dt * cos(self.th)
-                self.y += v_robot * dt * sin(self.th)
+                self.x += x_robot * dt * cos(self.th)
+                self.y += y_robot * dt * sin(self.th)
             elif (velocity_right == -velocity_left):
+		
                 self.th += w_robot * dt
                 self.x = self.x
                 self.y = self.y
             else:
+		
                 r_center = v_robot / w_robot
-                delta_th = w_robot * dt
-                self.x += r_center * (sin(self.th + delta_th) - sin(self.th))
-                self.y += r_center * (cos(self.th + delta_th) - cos(self.th))
-                self.th += delta_th
-            
+                delta_th = (w_robot * dt)
+		#self.x = self.x                
+		self.x += r_center * (sin(self.th + delta_th) - sin(self.th))
+                self.y += - (r_center * (cos(self.th + delta_th) - cos(self.th)))
+                
+		self.th += delta_th 
+            	#self.x += Ds*cos((self.th))
+		#self.y += Ds*sin((self.th))
+		#self.th += Dth
 
             
 
@@ -224,6 +206,7 @@ class odometry:
         odom.header.stamp = self.current_time
         odom.header.frame_id = "odom"
 
+#	rospy.loginfo(self.x)
         # set the position
         odom.pose.pose = Pose(Point(self.x, self.y, 0.), Quaternion(*odom_quat))
 

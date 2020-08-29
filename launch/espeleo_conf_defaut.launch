@@ -1,0 +1,42 @@
+<!-- Launch file padrão para o EspeleoRobo contendo launch para odometria de rodas e Lidar Ouster 16 S1-->
+
+
+<launch>
+
+<!-- ODOMETRIAS -->
+
+<!-- Odometria das rodas-->
+<!--
+	<node
+	    pkg="espeleo_locomotion"
+	    type="odometry_dif1.py"
+        name="odometry_espeleo"
+        output="screen"
+	    required="true">
+    </node> 
+-->
+
+<!--Odometria Intel RealSense Tracking T265-->
+
+	<arg name="serial_no" default=""/>
+	<!--remap from="/camera/odom/sample" to="/odom"/-->	
+
+	<include file="$(find realsense2_camera)/launch/rs_t265.launch">
+		<arg name="serial_no" value="$(arg serial_no)"/>
+	</include>
+
+<!-- SENSORES -->
+
+<!-- Lidar Ouster 16-->
+
+	<arg name="os1_hostname" default="192.168.1.61"/>
+	<arg name="os1_udp_dest" default="192.168.1.5"/>
+	<arg name="lidar_mode" default="512x10"/>
+
+	<include file="$(find ouster_ros)/os1.launch">
+		<arg name="os1_hostname" value="$(arg os1_hostname)"/>
+		<arg name="os1_udp_dest" value="$(arg os1_udp_dest)"/>
+		<arg name="lidar_mode" value="$(arg lidar_mode)"/>
+	</include>
+
+</launch> 

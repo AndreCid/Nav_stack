@@ -1,0 +1,12 @@
+# Espeleo local costmap Configuration 
+
+local_costmap:
+  global_frame: map
+  robot_base_frame: base_link
+  update_frequency: 10
+  publish_frequency: 10
+  static_map: true
+  rolling_window: true
+  width: 6.0
+  height: 6.0
+  resolution: 0.05

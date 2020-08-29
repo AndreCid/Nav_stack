@@ -1,0 +1,7 @@
+<launch>
+	<remap from="/camera/odom/sample" to="/odom"/>	
+    <remap from="/cam_1/color/image_raw" to="/rgb/image"/>
+    <remap from="/cam_1/color/camera_info" to="/rgb/camera_info"/>
+    <remap from="/scan_cloud" to="/cam_1/depth/color/points"/>
+    <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap"/>
+</launch> 

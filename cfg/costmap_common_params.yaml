@@ -1,0 +1,25 @@
+# Espeleo common costmap Configuration 
+
+obstacle_range: 10.0
+raytrace_range: 5.0
+
+# Medidas do Espeleo em metros
+
+footprint: [[0.277, -0.0725], [0.260, -0.0725], [0.260, -0.150], [0.360, -0.150], [0.360, -0.200], [0.150, -0.200], [0.150, -0.250], [-0.150, -0.250], [-0.150, -0.200], [-0.360, -0.200], [-0.360, -0.150], [-0.260, -0.150], [-0.260, -0.0725], [-0.277, -0.0725], [-0.277, 0.0725], [-0.260, 0.0725], [-0.260, 0.150], [-0.360, 0.150], [-0.360, 0.200], [-0.150, 0.200], [-0.150, 0.250], [0.150, 0.250], [0.150, 0.200], [0.360, 0.200], [0.360, 0.150], [0.260, 0.150], [0.260, 0.0725], [0.277, 0.0725]]
+
+inflation_radius: 0.50
+
+map_type: costmap
+
+transform_tolerance: 1
+
+
+observation_sources: laser_scan_sensor point_cloud_sensor
+
+laser_scan_sensor: {sensor_frame: os1_sensor, data_type: LaserScan, topic: /scan, marking: true, clearing: true}
+
+point_cloud_sensor: {sensor_frame: os1_sensor, data_type: PointCloud2, topic: /os1_cloud_node/points, marking: true, clearing: true}
+
+
+
+

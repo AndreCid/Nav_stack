@@ -1,0 +1,31 @@
+<launch> 
+<arg name="map_file" default=""/>
+<!-- Launch para utilizar o navigation stack em um mapa pronto com o espeleo simulado -->
+ 
+	<!-- Conversor pointCloud para LaserScan -->
+	<node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan" respawn="true" output="screen">
+		<remap from= "cloud_in" to="velodyne/points2"/>
+		<param name="range_max" value="60"/>
+		<param name="min_height" value="0"/>
+		<param name="max_height" value="0.2"/>
+	</node>
+
+<!-- Run the map server --> 
+		<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+ 	<!--AMCL --> 
+		
+	<include file="$(find espeleo_2dnav)/launch/amcl_espeleo.launch"/>
+
+	<!-- Carregar configuracoes dos costmaps do Espeleo -->
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		<rosparam file="$(find espeleo_2dnav)/cfg/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+	    <rosparam file="$(find espeleo_2dnav)/cfg/costmap_common_params.yaml" command="load" ns="local_costmap" />
+	    <rosparam file="$(find espeleo_2dnav)/cfg/local_costmap_params.yaml" command="load" />
+	    <rosparam file="$(find espeleo_2dnav)/cfg/global_costmap_params.yaml" command="load" /> 
+	    <rosparam file="$(find espeleo_2dnav)/cfg/base_local_planner_params.yaml" command="load" />
+	 </node>
+
+	<!-- Carrega Rviz configurado-->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find espeleo_2dnav)/rviz/navigation_viz.rviz"/>
+
+</launch> 
